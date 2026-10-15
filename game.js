@@ -19,7 +19,8 @@ const STATUS={burn:['灼烧','burn','回合开始时受到等同层数的伤害�
 const RELICS={qingfeng:['青锋剑','每场战斗打出的第一张金属性牌伤害 +3'],hulu:['赤金葫芦','每场战斗开始时，获得 1 瓶随机丹药的效果'],zhong:['镇魂铜钟','每回合第一次受到伤害时减 3 点'],
  yupei:['五行玉佩','触发相生时有 25% 几率抽 1 张牌'],jing:['照心镜','心魔的护体真气减半'],fubi:['灵符笔','每场战斗第 1 回合多抽 2 张牌']};
 const POTIONS={huiyuan:['回元丹','回复 15 点生命',35],ningshen:['凝神丹','获得 2 点灵力',40],jingang:['金刚丹','获得 12 点护体真气',35],qingmu:['青木丹','抽 3 张牌',40],ziyan:['紫烟散','对所有敌人施加 2 层易伤',45],xuelian:['雪莲丹','死亡时自动复活，恢复 30% 生命（被动）',80]};
-let DAOXIN={}; // 由 config/daoxin.json 加载：[名称, 效果, 取舍说明]
+let DAOXIN={};let BAL={restHealPct:.3,duoFloorFrom:4,duoEnemyScale:.8}; // config/balance.json 覆盖
+ // 由 config/daoxin.json 加载：[名称, 效果, 取舍说明]
 const A=(d,n=1,x={})=>Object.assign({t:'atk',d,n},x);
 const ENEMIES={
  shanxiao:{name:'山魈',hp:26,img:'shanxiao',moves:[A(8),{t:'buff',name:'捶胸',str:2},A(8),{t:'def',b:6}]},
@@ -95,7 +96,7 @@ function viewDeck(pickCb,title){const m=document.createElement('div');m.classNam
  m.innerHTML=`<h1 style="font-size:26px">${title||'牌组（'+G.deck.length+' 张）'}</h1><div class="grid">${list.map(c=>cardHTML(c)).join('')}</div><span class="btn" id="mclose">${pickCb?'取消':'关闭'}</span>`;
  app().appendChild(m);m.querySelector('#mclose').onclick=()=>m.remove();
  if(pickCb)m.querySelectorAll('.card').forEach(e=>e.onclick=()=>{const c=G.deck.find(x=>x.uid==e.dataset.uid);m.remove();pickCb(c);});}
-function discardPotion(i){const p=G.potions[i];if(!p)return;const m=document.createElement('div');m.className='modal';m.innerHTML=`<h1 style="font-size:26px;margin-top:180px">丢弃${POTIONS[p][0]}？</h1><div><span class="btn" id="dyes">丢弃</span><span class="btn" id="dno">取消</span></div>`;app().appendChild(m);m.querySelector('#dno').onclick=()=>m.remove();m.querySelector('#dyes').onclick=()=>{m.remove();G.potions.splice(i,1);toast(`已丢弃${POTIONS[p][0]}`);rerender();};}
+function discardPotion(i){const p=G.potions[i];if(!p)return;const m=document.createElement('div');m.className='dimbg';m.innerHTML=`<div class="dialog"><img src="img/${p}.jpg"><h2>丢弃${POTIONS[p][0]}？</h2><div style="color:#bfae86;font-size:14px">${POTIONS[p][1]}<br>丢弃后无法找回。</div><div><span class="btn" id="dyes">丢弃</span><span class="btn" id="dno">取消</span></div></div>`;m.onclick=e=>{if(e.target===m)m.remove();};app().appendChild(m);m.querySelector('#dno').onclick=()=>m.remove();m.querySelector('#dyes').onclick=()=>{m.remove();G.potions.splice(i,1);toast(`已丢弃${POTIONS[p][0]}`);rerender();};}
 function gainPotion(p){if(G.potions.length>=3){toast('丹药栏已满');return false;}G.potions.push(p);return true;}
 function randPotion(){return pick(['huiyuan','ningshen','jingang','qingmu','ziyan']);}
 function randRelic(){const pool=['hulu','zhong','yupei','fubi'].filter(r=>!G.relics.includes(r));return pool.length?pick(pool):null;}
@@ -118,14 +119,14 @@ function showMap(){B=null;rerender=showMap;const can=reachable();const H=13*68+1
  let lines='';G.map.forEach(row=>row.forEach(n=>{if(n.f<12)n.next.forEach(c=>lines+=`<line x1="${x(n.c)}" y1="${y(n.f)}" x2="${x(c)}" y2="${y(n.f+1)}" stroke="#8a7342" stroke-width="2" stroke-dasharray="6 5" opacity=".7"/>`);
   else lines+=`<line x1="${x(n.c)}" y1="${y(12)}" x2="440" y2="${y(13)}" stroke="#c33" stroke-width="2" stroke-dasharray="6 5" opacity=".6"/>`;}));
  let nodes='';G.map.forEach(row=>row.forEach(n=>{const cls=can.includes(n)?'can':(G.path||[]).includes(n.f+'-'+n.c)?'done':'';
-  nodes+=`<div class="node ${cls} ${G.pos===n?'cur':''}" style="left:${x(n.c)}px;top:${y(n.f)}px" title="${NODE[n.t][1]}" ${cls==='can'?`onclick="enterNode(${n.f},${n.c})"`:''}>${NODE[n.t][0]}<span class="nl">${NODE[n.t][1]}</span></div>`;}));
+  nodes+=`<div class="node ${cls} ${G.pos===n?'cur':''}" style="left:${x(n.c)}px;top:${y(n.f)}px" data-tt="${NODE[n.t][1]}" ${cls==='can'?`onclick="enterNode(${n.f},${n.c})"`:''}>${NODE[n.t][0]}<span class="nl">${NODE[n.t][1]}</span></div>`;}));
  nodes+=`<div class="node boss ${G.floor===12?'can':''}" style="left:440px;top:${y(13)}px" ${G.floor===12?'onclick="enterBoss()"':''}></div>`;
  app().innerHTML=topBar()+`<div class="mapwrap" id="mw"><div style="position:relative;height:${H}px"><svg width="880" height="${H}" style="position:absolute;left:0;top:0">${lines}</svg>${nodes}</div></div>
  <div class="legend panel">${['combat','elite','event','shop','rest'].map(k=>NODE[k][0]+' '+NODE[k][1]).join('<br>')}<br>👿 心魔（第 13 层）</div>
  <div class="panel" style="position:absolute;left:16px;top:70px;width:170px;font-size:14px;line-height:1.8">炼气期 · 第一幕<br>选择发光的节点前进。<br>第 6、12 层为洞府打坐，第 7、9 层可能遇到精英。</div>`;
  const mw=$('#mw');{let st=y(Math.min(G.floor+1,13))-(G.floor>=11?120:500);mw.scrollTop=st<220?0:st;}}
 function enterNode(f,c){const n=G.map[f-1][c];G.pos=n;G.floor=f;(G.path=G.path||[]).push(f+'-'+c);
- ({combat:()=>startCombat(pick(f>=4?DUO:SOLO),f>=4?.8:1,'combat'),elite:()=>startCombat([pick(['python','ghost'])],1,'elite'),event:showEvent,shop:showShop,rest:showRest})[n.t]();}
+ ({combat:()=>startCombat(pick(f>=BAL.duoFloorFrom?DUO:SOLO),f>=BAL.duoFloorFrom?BAL.duoEnemyScale:1,'combat'),elite:()=>startCombat([pick(['python','ghost'])],1,'elite'),event:showEvent,shop:showShop,rest:showRest})[n.t]();}
 function enterBoss(){G.floor=13;startCombat(['xinmo'],1,'boss');}
 // ================= 战斗 =================
 function addSt(u,k,v){u.st[k]=(u.st[k]||0)+v;}
@@ -154,10 +155,11 @@ function intentHTML(e){const m=intentOf(e);let ic,tx,warn=false;
  else{ic='debuff';tx=`施加易伤 ${m.vuln}`;}
  let w='';if(m.warn){w=`<div class="intent warn">⚠ 下回合心魔蓄力 · ${enemyAtk(e,e.moves[(e.mi+1)%e.moves.length],true,true)} 伤害</div><br>`;}
  return w+`<div class="intent ${warn?'warn':''}"><img src="img/icons/64/${ic}.png">${tx}</div>`;}
+function predictNext(){let tot=0;for(const e of living()){const m=e.moves[(e.mi+1)%e.moves.length];if(m.t!=='atk')continue;const v=enemyAtk(e,m,true);tot+=v*m.n;}return tot;}
 function predictIncoming(){let tot=0,first=null;for(const e of living()){const m=intentOf(e);if(m.t!=='atk')continue;const v=enemyAtk(e,m);for(let h=0;h<m.n;h++){if(first===null)first=v;tot+=v;}}
  if(G.relics.includes('zhong')&&!B.zhong&&first)tot-=Math.min(3,first);return Math.max(0,tot-B.p.block);}
 function bossBlock(e,m){let b=Math.round(m.b*e.scale);if(e.id==='xinmo'&&G.relics.includes('jing'))b=Math.floor(b/2);return b;}
-function stHTML(u){return `<div class="stat">${Object.entries(u.st).filter(([k,v])=>v>0).map(([k,v])=>`<span title="${STATUS[k][2]}"><img src="img/icons/64/${STATUS[k][1]}.png">${STATUS[k][0]} ${v}</span>`).join('')}</div>`;}
+function stHTML(u){return `<div class="stat">${Object.entries(u.st).filter(([k,v])=>v>0).map(([k,v])=>`<span data-tt="${STATUS[k][2]}"><img src="img/icons/64/${STATUS[k][1]}.png">${STATUS[k][0]} ${v}</span>`).join('')}</div>`;}
 function isSheng(d){return B.lastEl&&GEN[B.lastEl]===d.element;}
 const WPOS={wood:[128.5,41.5],fire:[212,100.5],earth:[180.5,200.5],metal:[75.5,200.5],water:[44,100.5]};
 function shengTip(from,to){if(localStorage.getItem('wd_shengTip'))return;localStorage.setItem('wd_shengTip','1');B.tip=`<b>相生！${ELN[from]}生${ELN[to]}</b><br>上一张是${ELN[from]}属性，这张${ELN[to]}属性卡获得加成。<br><small>五行相生顺序：木→火→土→金→水→木（点击关闭）</small>`;drawTip();}
@@ -177,7 +179,7 @@ function renderBattle(){if(!B)return;rerender=renderBattle;const lv=living();if(
  const hand=B.hand.map((c,i)=>{const d=def(c);const ok=d.cost<=B.energy;return cardHTML(c,(isSheng(d)?'sheng ':'')+(ok?'':'nope')).replace('class="card','onclick="playCard('+i+')" class="card');}).join('');
  app().innerHTML=topBar()+`<div class="bg"></div><div class="log">${B.log.join('<br>')}</div>${wheelSVG()}
  <div class="unit" style="left:150px;width:300px" id="pl"><div class="fig" style="width:300px;height:300px;background-image:url(img/jianxiu_${B.pose||'idle'}.png)"></div>
- <div><b>青岚</b>${B.p.block?`<span class="blkv">🛡${B.p.block}</span>`:''}</div><div class="hpb"><i style="width:${100*G.hp/G.maxHp}%"></i></div><div>${G.hp} / ${G.maxHp}</div>${(()=>{const x=predictIncoming();return `<div class="predict ${x?'':'safe'}">预计受到 ${x} 点伤害</div>`;})()}${stHTML(B.p)}</div>
+ <div><b>青岚</b>${B.p.block?`<span class="blkv">🛡${B.p.block}</span>`:''}</div><div class="hpb"><i style="width:${100*G.hp/G.maxHp}%"></i></div><div>${G.hp} / ${G.maxHp}</div>${(()=>{const x=predictIncoming();const atk=living().some(e=>intentOf(e).t==='atk');if(!atk&&living().some(e=>intentOf(e).warn)){return `<div class="predict">下回合预计受到 ${predictNext()} 点伤害</div>`;}return `<div class="predict ${x?'':'safe'}">预计受到 ${x} 点伤害</div>`;})()}${stHTML(B.p)}</div>
  ${en}<div class="energy">${B.energy}<small>灵力 ${B.energy}/${G.energyMax}</small></div>
  <div class="pile" style="left:20px" onclick="">抽牌堆<br>${B.draw.length}</div><div class="pile" style="right:20px">弃牌堆 ${B.disc.length}<br>消耗 ${B.exh.length}</div>
  <span class="btn endbtn" onclick="endTurn()">结束回合</span><div class="hand" style="--hm:${Math.min(-6,Math.floor((930-150*B.hand.length)/(2*B.hand.length)))}px">${hand}</div>`;drawTip();}
@@ -257,11 +259,11 @@ function buy(k,i){const it=G.shop[k][i];if(it.sold)return;if(G.gold<it.price){to
 function removePrice(){return 50+25*G.removeCount;}
 function shopRemove(){const p=removePrice();if(G.shop.removed||G.gold<p)return;viewDeck(c=>{G.deck=G.deck.filter(x=>x!==c);G.gold-=p;G.removeCount++;G.shop.removed=true;renderShop();},'选择一张卡删除');}
 // ================= 洞府打坐 =================
-function showRest(){rerender=showRest;const h=Math.floor(G.maxHp*.3);
+function showRest(){rerender=showRest;const h=Math.floor(G.maxHp*BAL.restHealPct);
  app().innerHTML=topBar()+`<div class="fullbg" style="background-image:url(img/rest.jpg);filter:brightness(.75)"></div><div style="position:absolute;left:319px;top:232px;width:300px;height:300px;background:url(img/jianxiu_idle.png) bottom center/contain no-repeat;filter:drop-shadow(0 0 12px rgba(160,255,200,.35))"></div><div class="center" style="left:640px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.45) 30%)"><h1>🔥 洞府打坐</h1>
- <div class="row"><div class="panel restbtn" style="width:280px;text-align:center;cursor:pointer" onclick="restHeal()"><div style="font-size:60px">🧘</div><h2>调息</h2>回复 ${h} 点生命（30%）</div>
+ <div class="row"><div class="panel restbtn" style="width:280px;text-align:center;cursor:pointer" onclick="restHeal()"><div style="font-size:60px">🧘</div><h2>调息</h2>回复 ${h} 点生命（${Math.round(BAL.restHealPct*100)}%）</div>
  <div class="panel restbtn" style="width:280px;text-align:center;cursor:pointer" onclick="restUp()"><div style="font-size:60px">📜</div><h2>参悟</h2>升级一张卡</div></div></div>`;}
-function restHeal(){G.hp=Math.min(G.maxHp,G.hp+Math.floor(G.maxHp*.3));showMap();}
+function restHeal(){G.hp=Math.min(G.maxHp,G.hp+Math.floor(G.maxHp*BAL.restHealPct));showMap();}
 function restUp(){if(!G.deck.some(c=>!c.up)){toast('没有可升级的卡');return;}viewDeck(c=>{c.up=true;toast(def(c).name+' 已升级');showMap();},'选择一张卡升级');}
 // ================= 奇遇 =================
 const EVENTS={
@@ -284,19 +286,25 @@ function evPick(key,i){const r=EVENTS[key].opts[i][1]();
  done(r);const tb=$('.top');if(tb)tb.outerHTML=topBar();}
 // ================= 结算 =================
 function showVictory(){rerender=showVictory;app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) left top/200% auto;filter:brightness(.3)"></div>
- <div class="center" style="top:0"><h1 style="font-size:52px">突 破</h1><div style="color:#bfae86">心魔已斩，炼气圆满，踏入筑基。选择一颗道心：</div>
+ <div class="center" style="top:0"><h1 style="font-size:52px">突 破</h1><div style="color:#bfae86">心魔已斩，炼气圆满，踏入筑基。剩余生命 <b style="color:#e8c66a">${G.hp}/${G.maxHp}</b>　选择一颗道心：</div>
  <div class="row">${Object.entries(DAOXIN).map(([k,v])=>`<div class="panel" style="width:260px;text-align:center;cursor:pointer;border-color:#e8c66a;background:rgba(0,0,0,.75)" onclick="pickDao('${k}')"><h2 style="color:#e8c66a">${v[0]}</h2>${v[1]}<div style="color:#bfae86;font-size:13px;margin-top:8px">${v[2]}</div></div>`).join('')}</div></div>`;}
 function pickDao(k){G.daoxin=k;if(k==='lingmai')G.energyMax++;if(k==='daoji'){G.maxHp+=15;G.hp=G.maxHp;}
  app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) left top/200% auto;filter:brightness(.3)"></div><div class="center" style="top:0"><h1 style="font-size:46px">炼气期 · 通关</h1>
  <div style="font-size:20px">道心：${DAOXIN[k][0]}　|　牌组 ${G.deck.length} 张　|　法宝 ${G.relics.length} 件　|　灵石 ${G.gold}</div><div style="color:#bfae86">筑基期（第二幕）尚在开辟中……</div><span class="btn" onclick="showMenu()">返回主菜单</span></div>`;}
-function showDefeat(){B=null;rerender=showDefeat;app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) right top/200% auto;filter:brightness(.35)"></div>
+function showDefeat(){B=null;rerender=showDefeat;app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) 100% 0/212% auto;filter:brightness(.35)"></div>
  <div class="center" style="top:0"><h1 style="font-size:52px;color:#c44">陨 落</h1><div style="font-size:20px">道途止于第 ${G.floor} 层　|　牌组 ${G.deck.length} 张　|　灵石 ${G.gold}</div>
  <div style="color:#bfae86">胜败乃修行常事，重入轮回再问道。</div><span class="btn" onclick="newRun()">重新开始</span><span class="btn" onclick="showMenu()">主菜单</span></div>`;}
 // ================= 启动（#test=xxx 用于截图） =================
 function fitApp(){const a=app();if(!a)return;const k=Math.min(innerWidth/1280,innerHeight/800);a.style.transform=`scale(${k})`;a.style.left=((innerWidth-1280*k)/2)+'px';a.style.top=((innerHeight-800*k)/2)+'px';}
 window.addEventListener('resize',fitApp);fitApp();
+function ttInit(){const tt=document.createElement('div');tt.id='tt';document.body.appendChild(tt);
+ document.addEventListener('mouseover',ev=>{const c=ev.target.closest&&ev.target.closest('.card,[data-tt]');if(!c){tt.style.display='none';return;}
+  let h;if(c.classList.contains('card')){h=`<b>${c.querySelector('.ct').textContent}</b>　<span style="color:#9fd8ff">${c.querySelector('.cost').textContent} 灵力</span><div>${c.querySelector('.desc').innerHTML}</div><small>${c.querySelector('.tag').textContent}</small>`;}else h=c.dataset.tt;
+  tt.innerHTML=h;tt.style.display='block';const r=c.getBoundingClientRect();let x=r.left+r.width/2-140,y=r.top-tt.offsetHeight-10;if(y<4)y=r.bottom+10;tt.style.left=Math.max(4,Math.min(innerWidth-284,x))+'px';tt.style.top=y+'px';});}
+try{ttInit();}catch(e){}
 window.onerror=(m,s,l)=>{console.error('JSERR '+m+' @'+l);};
-async function loadConfig(){const r=await fetch('config/daoxin.json');const j=await r.json();DAOXIN={};for(const k in j)DAOXIN[k]=[j[k].name,j[k].desc,j[k].tradeoff];}
+async function loadConfig(){const r=await fetch('config/daoxin.json');const j=await r.json();DAOXIN={};for(const k in j)DAOXIN[k]=[j[k].name,j[k].desc,j[k].tradeoff];
+ try{Object.assign(BAL,await (await fetch('config/balance.json')).json());}catch(e){console.error('JSERR balance load failed: '+e);}}
 (async function boot(){try{await loadConfig();}catch(err){console.error('JSERR config load failed: '+err);}const t=(location.hash.match(/test=(\w+)/)||[])[1];if(!t)return showMenu();
  newRun();G.relics.push('yupei','zhong');G.potions=['huiyuan','xuelian'];G.deck.push(mkCard('wanjian'),mkCard('jianyi',true));
  if(t==='map'){G.floor=5;G.pos=G.map[4][1];G.path=['1-1','2-1','3-0','4-1','5-1'];showMap();}
@@ -310,7 +318,10 @@ async function loadConfig(){const r=await fetch('config/daoxin.json');const j=aw
  else if(t==='potionfull'){G.potions=['huiyuan','xuelian','jingang'];G.floor=7;G.pos=G.map[6][1];combatWon('elite');G.reward.potion='qingmu';takeR('potion');}
  else if(t==='shengtip'||t==='shengtip2'){localStorage.removeItem('wd_shengTip');G.floor=2;G.pos=G.map[1][1];startCombat(['wolf','wolf'],1,'combat');B.hand=[mkCard('huichun'),mkCard('xinghuo'),mkCard('yujian'),mkCard('jinzhong'),mkCard('hanbing')];B.lastEl='wood';const i=1;B.flashArrow=null;playCard(i);B.flashArrow=['wood','fire'];renderBattle();localStorage.removeItem('wd_shengTip');shengTip('wood','fire');if(location.hash.includes('shengtip2')){const j=B.hand.findIndex(c=>c.id==='jinzhong');playCard(j);}}
  else if(t==='predict'){G.floor=9;G.pos=G.map[8][1];startCombat(['shanxiao','bandit'],1,'combat');B.en[1].mi=1;addSt(B.p,'vulnerable',1);B.p.block=5;B.en[0].block=6;renderBattle();}
- else if(t==='breakthrough'){showVictory();}
+ else if(t==='breakthrough'){G.hp=38;showVictory();}
+ else if(t==='charge'){G.floor=13;startCombat(['xinmo'],1,'boss');B.en[0].mi=1;renderBattle();}
+ else if(t==='discard'){G.floor=3;showMap();discardPotion(0);}
+ else if(t==='tooltip'){G.floor=4;G.pos=G.map[3][1];startCombat(['wolf','wolf'],1,'combat');draw(5);renderBattle();const c=document.querySelectorAll('.hand .card')[4];c.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));}
  else if(t==='bighand'){G.floor=4;G.pos=G.map[3][1];startCombat(['wolf','wolf'],1,'combat');B.en[0].hp=0;draw(4);B.lastEl='metal';renderBattle();}
  else if(t==='upgrade'){G.floor=6;for(let i=0;i<8;i++)G.deck.push(mkCard(randCard()));showRest();restUp();}
 })();

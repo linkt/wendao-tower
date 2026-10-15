@@ -44,3 +44,5 @@
 - 测试入口另加 #test=bighand | upgrade
 - 洞府打坐背景（借用 event.jpg，含大字）压暗+加模糊，避免干扰；result.jpg 新图下突破/陨落页文字清晰，亮度未调。
 - v0.3 补：新卡图 wanjian/budong/jianyi；洞府打坐改用 img/rest.jpg 背景+剑修立绘坐蒲团；地图改为“生成+就地修补”保证路径约束（此前约多数局走保底固定布局）。
+- v0.3.1：数值移入 config/balance.json（restHealPct 0.25、duoFloorFrom 4、duoEnemyScale 0.9），game.js 启动加载。
+- QA #15 蓄力回合显示“下回合预计受到 X 点伤害”；#18 原生 title 改为即时自定义悬浮提示（手牌显示完整卡面文字）；#19 丹药丢弃确认改为暗底+居中对话框；#20 陨落页去掉左侧细线，突破页显示剩余生命。测试入口 #test=charge|discard|tooltip。

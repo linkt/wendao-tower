@@ -119,3 +119,9 @@ html,body{overflow:hidden}
 .item.evbtn:hover,.restbtn:hover{border-color:#ffe08a;background:linear-gradient(rgba(201,162,74,.45),rgba(138,106,42,.45));transform:translateY(-2px);box-shadow:0 0 12px rgba(255,216,107,.4)}
 .modal .grid{max-height:600px;gap:16px 12px}.modal .card{zoom:.82}
 .shengtip{padding-right:40px}.shengtip .tipx{position:absolute;top:6px;right:12px;color:#bfae86;font-size:16px}
+
+#tt{position:fixed;display:none;z-index:999;width:280px;background:rgba(10,12,16,.97);border:1px solid #e8c66a;border-radius:8px;padding:8px 12px;font:14px/1.6 "Noto Serif CJK SC",serif;color:#f3e9d2;pointer-events:none;box-shadow:0 4px 14px #000}
+#tt em{color:#ffb070;font-style:normal;font-weight:bold}#tt .sh{color:#9fe6a0}#tt .ex{color:#ff8a7a}#tt small{color:#bfae86}
+.dimbg{position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:80;display:flex;align-items:center;justify-content:center}
+.dialog{background:#141b24;border:2px solid #e8c66a;border-radius:14px;padding:22px 36px;text-align:center;min-width:360px;box-shadow:0 10px 40px #000}
+.dialog img{width:64px;height:64px;border-radius:50%}.dialog h2{color:#e8c66a;margin:8px 0}
