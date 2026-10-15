@@ -66,7 +66,7 @@ function newRun(){uid=1;G={hp:70,maxHp:70,gold:99,deck:[],relics:['qingfeng'],po
  ['yujian','yujian','yujian','yujian','jinzhong','jinzhong','jinzhong','huichun','xinghuo','hanbing'].forEach(i=>G.deck.push(mkCard(i)));
  G.map=genMap();showMap();}
 function genMap(){
- for(let tries=0;tries<500;tries++){const fl=genMapOnce();if(mapOK(fl))return fl;}
+ for(let tries=0;tries<200;tries++){const fl=genMapOnce();if(repairMap(fl))return fl;}
  console.warn('genMap: fallback');return genMapOnce(true);}
 function genMapOnce(force){const W={combat:.42,event:.24,elite:.14,shop:.08,rest:.12};const fl=[];
  for(let f=1;f<=12;f++){const row=[];for(let c=0;c<3;c++){let t;
@@ -76,6 +76,12 @@ function genMapOnce(force){const W={combat:.42,event:.24,elite:.14,shop:.08,rest
   row.push({f,c,t,next:[]});}fl.push(row);}
  for(let f=0;f<11;f++)for(const n of fl[f]){n.next.push(n.c);if(n.c>0&&Math.random()<.5)n.next.push(n.c-1);if(n.c<2&&Math.random()<.5)n.next.push(n.c+1);}
  return fl;}
+function repairMap(fl){for(let it=0;it<40;it++){if(mapOK(fl))return true;// 找一条不达标路径并就地修补
+  const path=[];let n=pick(fl[0]);for(let f=1;f<=12;f++){path.push(n);if(f<12)n=fl[f][pick(n.next)];}
+  const el=path.filter(x=>x.t==='elite').length,ev=path.filter(x=>x.t==='event'||x.t==='shop').length;
+  if(!el){const c=path.filter(x=>x.f===7||x.f===9);pick(c).t='elite';}
+  else if(ev<2){const c=path.filter(x=>x.f>=4&&x.f<=11&&x.f!==6&&x.t==='combat');if(c.length)pick(c).t=Math.random()<.75?'event':'shop';}}
+ return mapOK(fl);}
 function mapOK(fl){// 每条路径：精英≥1，奇遇/坊市≥2（自底向上取最小值）
  const m={};for(let f=12;f>=1;f--)for(const n of fl[f-1]){const e=n.t==='elite'?1:0,v=(n.t==='event'||n.t==='shop')?1:0;
   if(f===12){m[f+'-'+n.c]=[e,v];continue;}let me=99,mv=99;for(const c of n.next){const x=m[(f+1)+'-'+c];me=Math.min(me,x[0]);mv=Math.min(mv,x[1]);}m[f+'-'+n.c]=[e+me,v+mv];}
@@ -252,7 +258,7 @@ function removePrice(){return 50+25*G.removeCount;}
 function shopRemove(){const p=removePrice();if(G.shop.removed||G.gold<p)return;viewDeck(c=>{G.deck=G.deck.filter(x=>x!==c);G.gold-=p;G.removeCount++;G.shop.removed=true;renderShop();},'选择一张卡删除');}
 // ================= 洞府打坐 =================
 function showRest(){rerender=showRest;const h=Math.floor(G.maxHp*.3);
- app().innerHTML=topBar()+`<div class="fullbg" style="background-image:url(img/event.jpg);filter:brightness(.18) blur(6px)"></div><div class="center"><h1>🔥 洞府打坐</h1>
+ app().innerHTML=topBar()+`<div class="fullbg" style="background-image:url(img/rest.jpg);filter:brightness(.75)"></div><div style="position:absolute;left:319px;top:232px;width:300px;height:300px;background:url(img/jianxiu_idle.png) bottom center/contain no-repeat;filter:drop-shadow(0 0 12px rgba(160,255,200,.35))"></div><div class="center" style="left:640px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.45) 30%)"><h1>🔥 洞府打坐</h1>
  <div class="row"><div class="panel restbtn" style="width:280px;text-align:center;cursor:pointer" onclick="restHeal()"><div style="font-size:60px">🧘</div><h2>调息</h2>回复 ${h} 点生命（30%）</div>
  <div class="panel restbtn" style="width:280px;text-align:center;cursor:pointer" onclick="restUp()"><div style="font-size:60px">📜</div><h2>参悟</h2>升级一张卡</div></div></div>`;}
 function restHeal(){G.hp=Math.min(G.maxHp,G.hp+Math.floor(G.maxHp*.3));showMap();}
