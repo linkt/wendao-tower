@@ -92,3 +92,29 @@ h1{text-align:center;color:#e8c66a;letter-spacing:6px;margin:0}
 
 .item.relicrow{border:2px solid #e8c66a;box-shadow:0 0 12px rgba(232,198,106,.5)}
 .card.sheng{filter:drop-shadow(0 0 4px rgba(124,255,154,.55))}
+.card .art{position:absolute;overflow:hidden}.card .art img.cart{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* v0.3 */
+.intent.warn{color:#ff5a48;border-color:#ff3020;font-size:18px;font-weight:bold;padding:4px 12px}
+.predict{margin-top:3px;font-size:14px;color:#ff8a7a;font-weight:bold;text-shadow:0 1px 2px #000}.predict.safe{color:#9fe6a0}
+.shengtip{position:absolute;left:50%;top:150px;transform:translateX(-50%);z-index:70;background:rgba(14,30,18,.95);border:2px solid #7cff9a;border-radius:12px;padding:12px 22px;font-size:16px;line-height:1.7;text-align:center;cursor:pointer}
+.shengtip b{color:#9fff9f;font-size:19px}.shengtip small{color:#bfae86}
+.wheel .warrow{position:absolute;left:0;top:0;width:170px;height:170px;pointer-events:none}
+.wheel .warrow line{stroke:#7cff9a;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 0 6px #7cff9a);animation:aflash .35s 4 alternate}
+@keyframes aflash{from{opacity:1}to{opacity:.15}}
+.eblk{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;margin-left:6px;vertical-align:middle;background:url(img/icons/64/enemyBlock.png) center/contain no-repeat;color:#fff;font-weight:bold;font-size:15px;padding:0 1px 2px 0;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:0 0 2px #000}
+
+/* v0.3 QA */
+html,body{overflow:hidden}
+#app{position:absolute;margin:0;transform-origin:0 0}
+.mapwrap{scrollbar-width:none}.mapwrap::-webkit-scrollbar{display:none}
+.modal{padding-top:30px}.modal .grid{max-height:640px}
+.hand .card{margin:0 var(--hm,-6px)}.hand .card.sheng{z-index:3}.hand .card:hover{z-index:6}
+.enemy.dead{visibility:hidden}
+.log{font-size:14px;width:300px;max-height:170px}
+.node .nl{position:absolute;top:48px;left:50%;transform:translateX(-50%);font-size:11px;white-space:nowrap;color:#d8ccb0;text-shadow:0 1px 2px #000}
+.node.boss .nl{top:92px}
+.legend{top:60px;line-height:1.8}
+.item.evbtn,.restbtn{background:linear-gradient(rgba(201,162,74,.25),rgba(138,106,42,.25));border:2px solid #c9a24a;border-radius:10px;transition:.12s}
+.item.evbtn:hover,.restbtn:hover{border-color:#ffe08a;background:linear-gradient(rgba(201,162,74,.45),rgba(138,106,42,.45));transform:translateY(-2px);box-shadow:0 0 12px rgba(255,216,107,.4)}
+.modal .grid{max-height:600px;gap:16px 12px}.modal .card{zoom:.82}
