@@ -1,0 +1,152 @@
+*{box-sizing:border-box}
+html,body{margin:0;background:#05080c;height:100%}
+#app{width:1280px;height:800px;margin:0 auto;position:relative;overflow:hidden;font-family:"Noto Serif CJK SC","Noto Sans CJK SC",serif;color:#f3e9d2;background:radial-gradient(ellipse at 50% 30%,#3a4a5a 0%,#1b2330 60%,#0e131a 100%);user-select:none}
+.top{position:absolute;top:0;left:0;right:0;height:44px;background:rgba(0,0,0,.6);display:flex;align-items:center;gap:22px;padding:0 16px;font-size:16px;border-bottom:1px solid #8a7342;z-index:20}
+.top b{color:#e8c66a}.top .sp{flex:1}
+.relic,.pot{width:34px;height:34px;border-radius:6px;border:1px solid #8a7342;background-size:cover;background-position:center;display:inline-block;vertical-align:middle;margin-right:4px;position:relative}
+.pot{cursor:pointer;border-radius:50%}.pot.empty{background:rgba(255,255,255,.06);cursor:default}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:40px;left:0;white-space:pre;background:#111a;background:rgba(10,12,16,.95);border:1px solid #8a7342;padding:6px 10px;font-size:13px;border-radius:6px;z-index:99;color:#f3e9d2;pointer-events:none}
+.btn{display:inline-block;background:linear-gradient(#c9a24a,#8a6a2a);color:#1b1208;padding:10px 24px;border-radius:10px;font-size:18px;font-weight:bold;border:2px solid #f3e9d2;cursor:pointer;margin:6px}
+.btn:hover{filter:brightness(1.15)}.btn.dis{filter:grayscale(1) brightness(.6);cursor:default}
+.btn.sm{font-size:14px;padding:5px 12px}
+h1{text-align:center;color:#e8c66a;letter-spacing:6px;margin:0}
+.panel{background:rgba(0,0,0,.5);border:1px solid #8a7342;border-radius:14px;padding:18px}
+/* cards */
+.card{width:150px;height:210px;border-radius:12px;padding:0;position:relative;background:transparent center/100% 100% no-repeat;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));color:#2a1f12;flex:none;cursor:pointer;transition:transform .12s}
+.card .cost{position:absolute;top:-10px;left:-10px;width:32px;height:32px;border-radius:50%;background:radial-gradient(#9ff0ff,#2a7fa8);border:2px solid #c9a24a;font-weight:bold;display:flex;align-items:center;justify-content:center;font-size:18px;color:#0e131a}
+.card .el{position:absolute;top:6px;right:8px;width:24px;height:24px;border-radius:50%;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.card .ct{text-align:center;font-weight:bold;font-size:17px;margin-top:2px}
+.card .art{height:62px;margin:5px 0;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:36px}
+.card .desc{font-size:12px;line-height:1.4;text-align:center}.card .desc em{color:#b5462a;font-style:normal;font-weight:bold}
+.card .sh{color:#7a5a10;margin-top:2px}.card .ex{color:#8a3030;font-weight:bold}
+.card .tag{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:11px;color:#7a6a4a}
+.card.up .ct{color:#2f7a2f}
+.card.rare{border-color:#e8c66a;box-shadow:0 0 20px #ffd86b}.card.uncommon{border-color:#6fa8dc;box-shadow:0 0 14px #6fa8dc}
+.metal{background:#9aa3ad}.wood{background:#4f8a3c}.water{background:#2f5f9e}.fire{background:#c4442e}.earth{background:#9a7240}
+.ametal{background:linear-gradient(#e6ebef,#9aa3ad)}.awood{background:linear-gradient(#cfe8b8,#4f8a3c)}.awater{background:linear-gradient(#cfe0f5,#2f5f9e)}.afire{background:linear-gradient(#ffd5a8,#c4442e)}.aearth{background:linear-gradient(#f0dcb8,#9a7240)}
+.card:hover{transform:translateY(-8px)}
+.card.sheng{transform:translateY(-22px);box-shadow:0 0 22px #7cff9a}
+.card.sheng::before{content:"相生 ✦";position:absolute;top:-26px;left:30px;right:30px;text-align:center;background:#2c7a3c;color:#fff;border-radius:8px;font-size:12px;padding:2px}
+.card.nope{filter:brightness(.6)}
+/* battle */
+.bg{position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.6)),radial-gradient(ellipse at 50% 20%,#4a5a6a 0%,#1b2330 55%,#0a0e13 100%);background-size:cover;background-position:center}
+.unit{position:absolute;bottom:300px;text-align:center;font-size:14px}
+.unit .fig{background-size:contain;background-repeat:no-repeat;background-position:bottom center;margin:0 auto}
+.hpb{height:12px;background:#311;border:1px solid #000;border-radius:6px;overflow:hidden;margin:4px auto 2px;width:150px;position:relative}
+.hpb i{display:block;height:100%;background:linear-gradient(#e05040,#902018)}
+.blkv{display:inline-block;background:#2f5f9e;border-radius:10px;padding:0 8px;margin-left:6px;font-weight:bold}
+.stat{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:3px;max-width:220px;margin-left:auto;margin-right:auto}
+.stat span{display:inline-flex;align-items:center;background:rgba(0,0,0,.6);border-radius:9px;padding:0 6px 0 0;font-size:12px}
+.stat img{width:20px;height:18px;border-radius:50%;margin-right:3px;object-fit:cover}
+.enemy{cursor:pointer}.enemy.dead{opacity:.15;pointer-events:none}.enemy.tgt .fig{filter:drop-shadow(0 0 10px #ff6060)}
+.intent{display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.7);border:1px solid #8a7342;border-radius:10px;padding:2px 8px;font-size:14px;margin-bottom:4px}
+.intent img{width:26px;height:22px;border-radius:50%;object-fit:cover}.intent.warn{border-color:#ff5040;color:#ffb0a0;animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 14px #ff4030}}
+.energy{position:absolute;left:30px;bottom:150px;width:86px;height:86px;border-radius:50%;background:radial-gradient(#9ff0ff,#1a5f88);border:3px solid #c9a24a;color:#0e131a;font-size:34px;font-weight:bold;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.energy small{font-size:12px}
+.pile{position:absolute;bottom:30px;font-size:14px;background:rgba(0,0,0,.5);padding:8px 12px;border-radius:8px;border:1px solid #8a7342;text-align:center}
+.hand{position:absolute;bottom:18px;left:150px;right:200px;display:flex;justify-content:center;gap:-10px}
+.hand .card{margin:0 -6px}
+.endbtn{position:absolute;right:30px;bottom:130px}
+.wheel{position:absolute;right:16px;top:52px;width:170px;height:190px}.wheel img{position:absolute;left:0;top:0;width:170px;height:170px}.wheel img.nxt{filter:drop-shadow(0 0 8px #7cff9a);animation:pulse2 1s infinite}.wheel .wl{position:absolute;top:170px;left:0;right:0;text-align:center;font-size:13px;color:#e8c66a}@keyframes pulse2{50%{opacity:.55}}
+.log{position:absolute;left:16px;top:56px;width:260px;font-size:12px;color:#bfae86;line-height:1.5;max-height:150px;overflow:hidden}
+.float{position:absolute;color:#ff6b5b;font-weight:bold;font-size:26px;pointer-events:none;animation:up .9s forwards;text-shadow:0 2px 3px #000;z-index:50}
+@keyframes up{to{transform:translateY(-50px);opacity:0}}
+.shake{animation:shk .3s}@keyframes shk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+/* map */
+.mapwrap{position:absolute;top:44px;bottom:0;left:200px;right:200px;overflow-y:auto}
+.node{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#2a3340;border:2px solid #8a7342;display:flex;align-items:center;justify-content:center;font-size:22px}
+.node.can{cursor:pointer;border-color:#ffe08a;box-shadow:0 0 16px #ffd86b;animation:pulse 1.2s infinite;background:#4a4030}
+.node.done{background:#554a2a;opacity:.8}.node.cur{border-color:#7cff9a;box-shadow:0 0 16px #7cff9a}
+.node.boss{width:72px;height:72px;margin:-36px 0 0 -36px;background:#2a1520;border-color:#c33}
+.node .nic{position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px);object-fit:contain;border-radius:50%;pointer-events:none;z-index:1}
+.node.boss .nic,.node .bossic{inset:3px;width:calc(100% - 6px);height:calc(100% - 6px)}
+/* 图标盖住 emoji；img 404 被 remove 后露出 NODE 里的 emoji 字 */
+.node .nl{z-index:2}
+.mifb{line-height:1}
+.legend .mifb{font-size:18px}
+.legend .lgrow{display:flex;align-items:center;gap:8px;margin:2px 0}
+.legend .lgic{width:28px;height:28px;border-radius:50%;object-fit:contain;flex:none}
+.hudic{width:22px;height:22px;vertical-align:-5px;margin-right:5px;object-fit:contain}
+.energy .hudic{position:absolute;top:4px;right:4px;width:18px;height:18px;margin:0;opacity:.85}
+.ebeads{position:absolute;left:50%;bottom:-18px;transform:translateX(-50%);display:flex;gap:3px}
+.ebeads .eb{width:16px;height:16px;object-fit:contain}
+.dxic{width:64px;height:64px;object-fit:contain;display:block;margin:0 auto 8px;border-radius:50%}
+.dxic.lg{width:96px;height:96px;margin:4px auto 10px}
+.dxic.sm{width:22px;height:22px;display:inline;vertical-align:-5px;margin:0 4px 0 0;border-radius:50%}
+.dxpick{padding-top:14px}
+.legend{position:absolute;right:16px;top:70px;width:170px;font-size:14px;line-height:2}
+/* overlays */
+.center{position:absolute;top:44px;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.row{display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+.item{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.5);border:1px solid #8a7342;border-radius:10px;padding:8px 14px;cursor:pointer;min-width:340px;font-size:16px}
+.item:hover{border-color:#ffe08a}.item img{width:40px;height:40px;border-radius:8px;object-fit:cover}
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:40;display:flex;flex-direction:column;align-items:center;padding-top:60px;gap:12px}
+.modal .grid{display:flex;flex-wrap:wrap;gap:22px 14px;justify-content:center;width:1150px;max-height:620px;overflow-y:auto;padding:16px}
+.price{text-align:center;color:#e8c66a;margin-top:6px}
+.shopcell{display:flex;flex-direction:column;align-items:center;cursor:pointer}.shopcell.sold{opacity:.25;pointer-events:none}
+.fullbg{position:absolute;inset:0;background-size:cover;background-position:center}
+.toast{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);border:1px solid #e8c66a;padding:8px 18px;border-radius:8px;z-index:60}
+
+/* v0.2 card frames (400x560 -> 150x210, scale .375) */
+.card .cost{top:4px;left:4px;width:28px;height:28px;background:none;border:none;color:#fff;text-shadow:0 0 4px #000,0 0 2px #000}
+.card .ct{position:absolute;left:19px;top:8px;width:112px;height:14px;margin:0;font-size:12px;line-height:14px;color:#2a1f12}
+.card .art{position:absolute;left:15px;top:23px;width:120px;height:90px;margin:0;border-radius:0;font-size:40px;opacity:.9}
+.card .desc{position:absolute;left:14px;top:119px;width:122px;height:62px;font-size:10.5px;line-height:1.3;overflow:hidden}
+.card .tag{bottom:13px;font-size:9.5px}
+.card.rare,.card.uncommon{box-shadow:none}
+.card.sheng{box-shadow:none;filter:drop-shadow(0 0 10px #7cff9a)}
+.card.sheng::before{top:-20px}
+.card.nope{filter:brightness(.6)}
+.unit.bossu{bottom:290px}
+.intent img{border-radius:0;object-fit:contain}
+.stat img{border-radius:0;object-fit:contain}
+.card .ct{color:#ffe9b0;text-shadow:0 1px 2px #000}
+.card .desc{color:#f3e9d2;text-shadow:0 1px 2px #000}.card .desc em{color:#ffb070}
+.card .sh{color:#9fe6a0}.card .ex{color:#ff8a7a}.card .tag{color:#cdbb90}
+.card.up .ct{color:#9fff9f}
+
+.item.relicrow{border:2px solid #e8c66a;box-shadow:0 0 12px rgba(232,198,106,.5)}
+.card.sheng{filter:drop-shadow(0 0 4px rgba(124,255,154,.55))}
+.card .art{position:absolute;overflow:hidden}.card .art img.cart{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* v0.3 */
+.intent.warn{color:#ff5a48;border-color:#ff3020;font-size:18px;font-weight:bold;padding:4px 12px}
+.predict{margin-top:3px;font-size:14px;color:#ff5a48;font-weight:bold;text-shadow:0 1px 2px #000}.predict.safe{color:#9fe6a0}
+.shengtip{position:absolute;left:50%;top:150px;transform:translateX(-50%);z-index:70;background:rgba(14,30,18,.95);border:2px solid #7cff9a;border-radius:12px;padding:12px 22px;font-size:16px;line-height:1.7;text-align:center;cursor:pointer}
+.shengtip b{color:#9fff9f;font-size:19px}.shengtip small{color:#bfae86}
+.wheel .warrow{position:absolute;left:0;top:0;width:170px;height:170px;pointer-events:none}
+.wheel .warrow line{stroke:#7cff9a;stroke-width:9;stroke-linecap:round;filter:drop-shadow(0 0 6px #7cff9a);animation:aflash .35s 4 alternate}
+@keyframes aflash{from{opacity:1}to{opacity:.15}}
+.eblk{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;margin-left:6px;vertical-align:middle;background:url(img/icons/64/enemyBlock.png) center/contain no-repeat;color:#fff;font-weight:bold;font-size:15px;padding:0 1px 2px 0;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:0 0 2px #000}
+
+/* v0.3 QA */
+html,body{overflow:hidden}
+#app{position:absolute;margin:0;transform-origin:0 0}
+.mapwrap{scrollbar-width:none}.mapwrap::-webkit-scrollbar{display:none}
+.modal{padding-top:30px}.modal .grid{max-height:640px}
+.hand .card{margin:0 var(--hm,-6px)}.hand .card.sheng{z-index:3}.hand .card:hover{z-index:6}
+.enemy.dead{visibility:hidden}
+.log{font-size:14px;width:300px;max-height:170px}
+.node .nl{position:absolute;top:56px;left:50%;transform:translateX(-50%);font-size:11px;white-space:nowrap;color:#d8ccb0;text-shadow:0 1px 2px #000}
+.node.boss .nl{top:74px}
+.legend{top:60px;line-height:1.8}
+.item.evbtn,.restbtn{background:linear-gradient(rgba(201,162,74,.25),rgba(138,106,42,.25));border:2px solid #c9a24a;border-radius:10px;transition:.12s}
+.item.evbtn:hover,.restbtn:hover{border-color:#ffe08a;background:linear-gradient(rgba(201,162,74,.45),rgba(138,106,42,.45));transform:translateY(-2px);box-shadow:0 0 12px rgba(255,216,107,.4)}
+.modal .grid{max-height:600px;gap:16px 12px}.modal .card{zoom:.82}
+.shengtip{padding-right:40px}.shengtip .tipx{position:absolute;top:6px;right:12px;color:#bfae86;font-size:16px}
+
+#tt{position:fixed;display:none;z-index:999;width:280px;background:rgba(10,12,16,.97);border:1px solid #e8c66a;border-radius:8px;padding:8px 12px;font:14px/1.6 "Noto Serif CJK SC",serif;color:#f3e9d2;pointer-events:none;box-shadow:0 4px 14px #000}
+#tt em{color:#ffb070;font-style:normal;font-weight:bold}#tt .sh{color:#9fe6a0}#tt .ex{color:#ff8a7a}#tt small{color:#bfae86}
+.dimbg{position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:80;display:flex;align-items:center;justify-content:center}
+.dialog{background:#141b24;border:2px solid #e8c66a;border-radius:14px;padding:22px 36px;text-align:center;min-width:360px;box-shadow:0 10px 40px #000}
+.dialog>div:last-child{margin-top:18px}.dialog img{width:64px;height:64px;border-radius:50%}.dialog h2{color:#e8c66a;margin:8px 0}
+/* P2 手牌 10+ 扇形排布与悬停放大 */
+.hand{align-items:flex-end}
+.hand .card{transform:translateY(var(--dy,0px)) rotate(var(--rot,0deg));transform-origin:50% 100%;transition:transform .12s,margin .12s}
+.hand .card:hover{transform:translateY(var(--dy,0px)) rotate(var(--rot,0deg))}
+.hand .card.hov{transform:translateY(-70px) scale(1.3);z-index:20}
+.hand .card.sheng.hov{transform:translateY(-80px) scale(1.3)}
+
+/* v0.3.3 出招特效帧动画（中心锚点 256×256） */
+.fxspr{position:absolute;width:256px;height:256px;pointer-events:none;z-index:55;object-fit:contain;image-rendering:auto}
