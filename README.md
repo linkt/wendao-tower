@@ -46,3 +46,11 @@
 - v0.3 补：新卡图 wanjian/budong/jianyi；洞府打坐改用 img/rest.jpg 背景+剑修立绘坐蒲团；地图改为“生成+就地修补”保证路径约束（此前约多数局走保底固定布局）。
 - v0.3.1：数值移入 config/balance.json（restHealPct 0.25、duoFloorFrom 4、duoEnemyScale 0.9），game.js 启动加载。
 - QA #15 蓄力回合显示“下回合预计受到 X 点伤害”；#18 原生 title 改为即时自定义悬浮提示（手牌显示完整卡面文字）；#19 丹药丢弃确认改为暗底+居中对话框；#20 陨落页去掉左侧细线，突破页显示剩余生命。测试入口 #test=charge|discard|tooltip。
+- 文案配置：5 个奇遇的标题/正文/选项/结果移入 config/events.json，突破/通关/陨落页文案移入 config/screens.json（按 copy_settlement_events.md 定稿），启动时加载；选项逻辑仍在 game.js。#test=victory 现直接进通关页。
+
+## v0.3.2（2026-10-15 23:30，未上线）
+- 试玩数据改为设计口径（playtest_metrics.md）：localStorage 键升级为 wd_runs_v2（旧 wd_runs_v1 字段不兼容，不再读取，也不删除）。字段 runId/version/startedAt/endedAt/result(win|dead|quit)/deathFloor/deathEnemy(+连接，非战斗为 event)/hpPerFloor/hpEnterBoss/restChoices/potionsUsed/shengCount/deck/relics/daoxin。
+- quit：未结束的局在回主菜单、开新局、关闭页面（beforeunload）时记为 quit；通关率只算 win+dead。
+- 导出文件名 stats_v0.3.2_YYYYMMDD-HHMM.json。
+- QA：预计伤害字改为与蓄力意图同红 #ff5a48；根目录加 favicon.ico；手牌重叠时提示框跟随实际放大的卡（.card:hover）；丢弃丹药确认框按钮上方加 18px 间距。
+- 17 张卡面均为正式版。

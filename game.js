@@ -1,6 +1,6 @@
 'use strict';
 // ================= 数据 =================
-const VERSION='v0.3';
+const VERSION='v0.3.2';
 const ACT=1, GUIYI_ENABLED=ACT>1; // 五行归一：第一幕关闭（含界面提示）
 const ELK={metal:'jin',wood:'mu',water:'shui',fire:'huo',earth:'tu'};
 const ELN={metal:'金',wood:'木',water:'水',fire:'火',earth:'土'};
@@ -65,7 +65,7 @@ function cardHTML(c,extra=''){const d=def(c);const rar={starter:'起始',common:
 // ================= 局 =================
 function newRun(){uid=1;G={hp:70,maxHp:70,gold:99,deck:[],relics:['qingfeng'],potions:[],floor:0,pos:null,daoxin:null,energyMax:3,drawN:5,huanjing:0,removeCount:0};
  ['yujian','yujian','yujian','yujian','jinzhong','jinzhong','jinzhong','huichun','xinghuo','hanbing'].forEach(i=>G.deck.push(mkCard(i)));
- G.map=genMap();showMap();}
+ G.map=genMap();teleStart();showMap();}
 function genMap(){
  for(let tries=0;tries<200;tries++){const fl=genMapOnce();if(repairMap(fl))return fl;}
  console.warn('genMap: fallback');return genMapOnce(true);}
@@ -104,18 +104,18 @@ const RARW={combat:[.60,.30,.10],elite:[.45,.40,.15]};
 function randCard(rare,kind){const w=RARW[kind]||RARW.combat;const r=rare||(()=>{const x=Math.random();return x<w[0]?'common':x<w[0]+w[1]?'uncommon':'rare';})();return pick(CARDPOOL.filter(c=>c.rarity===r)).id;}
 function cardChoices(kind){const s=new Set();while(s.size<3)s.add(randCard(null,kind));return [...s];}
 function usePotion(i){const p=G.potions[i];if(!p||p==='xuelian')return;
- if(!B){if(p==='huiyuan'){G.hp=Math.min(G.maxHp,G.hp+15);G.potions.splice(i,1);rerender();}else toast('只能在战斗中使用');return;}
- G.potions.splice(i,1);potionEffect(p);renderBattle();}
+ if(!B){if(p==='huiyuan'){G.hp=Math.min(G.maxHp,G.hp+15);G.potions.splice(i,1);teleUpd(r=>r.potionsUsed++);rerender();}else toast('只能在战斗中使用');return;}
+ G.potions.splice(i,1);teleUpd(r=>r.potionsUsed++);potionEffect(p);renderBattle();}
 function potionEffect(p){if(p==='huiyuan')G.hp=Math.min(G.maxHp,G.hp+15);if(p==='ningshen')B.energy+=2;if(p==='jingang')B.p.block+=12;if(p==='qingmu')draw(3);
  if(p==='ziyan')B.en.forEach(e=>{if(e.hp>0)addSt(e,'vulnerable',2);});log(`使用了${POTIONS[p][0]}`);}
 let rerender=()=>{};
 // ================= 主菜单 =================
-function showMenu(){B=null;rerender=showMenu;app().innerHTML=`<div class="fullbg" style="background-image:url(img/mainmenu.jpg)"></div>
- <div style="position:absolute;left:0;right:0;bottom:90px;text-align:center"><span class="btn" style="font-size:24px;padding:14px 48px" onclick="newRun()">开始问道</span><br>
+function showMenu(){teleQuit();B=null;rerender=showMenu;app().innerHTML=`<div class="fullbg" style="background-image:url(img/mainmenu.jpg)"></div>
+ <div style="position:absolute;left:0;right:0;bottom:90px;text-align:center"><span class="btn" style="font-size:24px;padding:14px 48px" onclick="newRun()">开始问道</span><br><span class="btn" style="font-size:15px;padding:6px 18px" onclick="showStats()">${stx('menuBtn')}</span><br>
  <span style="color:#bfae86;font-size:14px">第一幕 · 炼气期　|　剑修 · 70 生命 · 3 灵力　|　${VERSION}</span></div>`;}
 // ================= 地图 =================
 function reachable(){if(G.floor>=12)return [];if(!G.pos)return G.map[0];return G.map[G.pos.f-1][G.pos.c].next.map(c=>G.map[G.pos.f][c]);}
-function showMap(){B=null;rerender=showMap;const can=reachable();const H=13*68+150;const y=f=>H-60-(f-1)*68,x=c=>220+c*220;
+function showMap(){teleHp();B=null;rerender=showMap;const can=reachable();const H=13*68+150;const y=f=>H-60-(f-1)*68,x=c=>220+c*220;
  let lines='';G.map.forEach(row=>row.forEach(n=>{if(n.f<12)n.next.forEach(c=>lines+=`<line x1="${x(n.c)}" y1="${y(n.f)}" x2="${x(c)}" y2="${y(n.f+1)}" stroke="#8a7342" stroke-width="2" stroke-dasharray="6 5" opacity=".7"/>`);
   else lines+=`<line x1="${x(n.c)}" y1="${y(12)}" x2="440" y2="${y(13)}" stroke="#c33" stroke-width="2" stroke-dasharray="6 5" opacity=".6"/>`;}));
  let nodes='';G.map.forEach(row=>row.forEach(n=>{const cls=can.includes(n)?'can':(G.path||[]).includes(n.f+'-'+n.c)?'done':'';
@@ -125,13 +125,14 @@ function showMap(){B=null;rerender=showMap;const can=reachable();const H=13*68+1
  <div class="legend panel">${['combat','elite','event','shop','rest'].map(k=>NODE[k][0]+' '+NODE[k][1]).join('<br>')}<br>👿 心魔（第 13 层）</div>
  <div class="panel" style="position:absolute;left:16px;top:70px;width:170px;font-size:14px;line-height:1.8">炼气期 · 第一幕<br>选择发光的节点前进。<br>第 6、12 层为洞府打坐，第 7、9 层可能遇到精英。</div>`;
  const mw=$('#mw');{let st=y(Math.min(G.floor+1,13))-(G.floor>=11?120:500);mw.scrollTop=st<220?0:st;}}
-function enterNode(f,c){const n=G.map[f-1][c];G.pos=n;G.floor=f;(G.path=G.path||[]).push(f+'-'+c);
+function enterNode(f,c){const n=G.map[f-1][c];G.pos=n;G.floor=f;(G.path=G.path||[]).push(f+'-'+c);TELE_LAST=null;teleFloor(f,n.t);
  ({combat:()=>startCombat(pick(f>=BAL.duoFloorFrom?DUO:SOLO),f>=BAL.duoFloorFrom?BAL.duoEnemyScale:1,'combat'),elite:()=>startCombat([pick(['python','ghost'])],1,'elite'),event:showEvent,shop:showShop,rest:showRest})[n.t]();}
-function enterBoss(){G.floor=13;startCombat(['xinmo'],1,'boss');}
+function enterBoss(){G.floor=13;teleBoss();teleFloor(13,'boss');startCombat(['xinmo'],1,'boss');}
 // ================= 战斗 =================
 function addSt(u,k,v){u.st[k]=(u.st[k]||0)+v;}
 function log(t){if(/造成 0 点伤害/.test(t))return;if(B){B.log.unshift(t);B.log.length=Math.min(B.log.length,8);}}
 function startCombat(ids,scale,kind){
+ TELE_LAST={kind,enemies:ids.slice()};
  B={kind,en:ids.map((id,i)=>{const d=ENEMIES[id];const hp=Math.round(d.hp*scale);return {id,i,name:d.name,hp,max:hp,block:0,st:{},mi:0,scale,moves:d.moves,img:d.img,siUsed:false};}),
   p:{block:0,st:{}},draw:shuffle(G.deck.map(c=>c)),hand:[],disc:[],exh:[],energy:0,lastEl:null,firstMetal:false,turn:0,log:[],target:0,over:false};
  if(G.relics.includes('hulu')){const p=randPotion();potionEffectPre(p);}
@@ -192,7 +193,7 @@ function playCard(i){if(B.over)return;const c=B.hand[i],d=def(c);if(d.cost>B.ene
  const sheng=isSheng(d);const prevEl=B.lastEl;B.flashArrow=sheng?[prevEl,d.element]:null;B.energy-=d.cost;B.hand.splice(i,1);B.fx=[];const hadAura=B.p.st.swordIntentAura||0;
  let tgt=B.en[B.target];if(!tgt||tgt.hp<=0)tgt=living()[0];
  let bonus=0;if(d.element==='metal'&&!B.firstMetal){B.firstMetal=true;if(G.relics.includes('qingfeng')&&d.actions.some(a=>a.op==='damage'))bonus=3;}
- log(`打出 ${d.name}${c.up?'+':''}${sheng?'（相生！）':''}`);
+ if(sheng)teleUpd(r=>r.shengCount++);log(`打出 ${d.name}${c.up?'+':''}${sheng?'（相生！）':''}`);
  for(const a of mergeActs(d,sheng)){
   if(a.op==='damage'){const n=a.times==='swordIntent'?(B.p.st.swordIntent||0):(a.times||1);for(let h=0;h<n;h++){if(!tgt||tgt.hp<=0)tgt=living()[0];if(!tgt)break;hitEnemy(tgt,a.value+bonus+(B.p.st.swordIntent||0));}bonus=0;}
   else if(a.op==='block')B.p.block+=a.value;
@@ -263,49 +264,86 @@ function showRest(){rerender=showRest;const h=Math.floor(G.maxHp*BAL.restHealPct
  app().innerHTML=topBar()+`<div class="fullbg" style="background-image:url(img/rest.jpg);filter:brightness(.75)"></div><div style="position:absolute;left:319px;top:232px;width:300px;height:300px;background:url(img/jianxiu_idle.png) bottom center/contain no-repeat;filter:drop-shadow(0 0 12px rgba(160,255,200,.35))"></div><div class="center" style="left:640px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.45) 30%)"><h1>🔥 洞府打坐</h1>
  <div class="row"><div class="panel restbtn" style="width:280px;text-align:center;cursor:pointer" onclick="restHeal()"><div style="font-size:60px">🧘</div><h2>调息</h2>回复 ${h} 点生命（${Math.round(BAL.restHealPct*100)}%）</div>
  <div class="panel restbtn" style="width:280px;text-align:center;cursor:pointer" onclick="restUp()"><div style="font-size:60px">📜</div><h2>参悟</h2>升级一张卡</div></div></div>`;}
-function restHeal(){G.hp=Math.min(G.maxHp,G.hp+Math.floor(G.maxHp*BAL.restHealPct));showMap();}
-function restUp(){if(!G.deck.some(c=>!c.up)){toast('没有可升级的卡');return;}viewDeck(c=>{c.up=true;toast(def(c).name+' 已升级');showMap();},'选择一张卡升级');}
+function restHeal(){teleUpd(r=>r.restChoices.push('heal'));G.hp=Math.min(G.maxHp,G.hp+Math.floor(G.maxHp*BAL.restHealPct));showMap();}
+function restUp(){if(!G.deck.some(c=>!c.up)){toast('没有可升级的卡');return;}viewDeck(c=>{c.up=true;teleUpd(r=>r.restChoices.push('upgrade'));toast(def(c).name+' 已升级');showMap();},'选择一张卡升级');}
 // ================= 奇遇 =================
-const EVENTS={
- dongfu:{name:'古修洞府',text:'山壁间露出一座古修士的洞府，禁制残存，强闯必受反噬，但洞中隐约有宝光流转。',opts:[['失去 8 点生命，取得一件法宝',()=>{G.hp=Math.max(1,G.hp-8);const r=(G.floor>=10&&!G.relics.includes('jing'))?'jing':randRelic();if(r){G.relics.push(r);return `你取得了「${RELICS[r][0]}」：${RELICS[r][1]}`;}G.gold+=50;return '法宝已尽，只得 50 灵石。';}],['离开',()=>'你没有冒险，转身离去。']]},
- lingquan:{name:'灵泉',text:'林间一汪灵泉，灵气氤氲，可饮之疗伤，亦可借灵气参悟功法。',opts:[['回复 20 点生命',()=>{G.hp=Math.min(G.maxHp,G.hp+20);return '泉水入腹，伤势大为好转。';}],['升级一张卡',()=>'UPGRADE']]},
- sanxiu:{name:'落难散修',text:'一位散修被妖兽所伤，倒在路旁向你求救：“道友若肯相助，必有厚报。”',opts:[['花 30 灵石救他，获得一张稀有卡',()=>{if(G.gold<30)return null;G.gold-=30;const id=randCard('rare');G.deck.push(mkCard(id));return `散修赠你功法「${CARDS[id].name}」。`;}],['无视他',()=>'你径直走过。']]},
- huanjing:{name:'心魔幻境',text:'眼前景物扭曲，你陷入一片幻境，过往执念化作锁链缠身。斩断执念，便要付出代价。',opts:[['删除一张卡，立即受到 5 点伤害',()=>'REMOVE'],['静心离开',()=>'你收敛心神，走出幻境。']]},
- dushi:{name:'坊市赌石',text:'路边小摊摆着一堆原石：“二十灵石一块，开出灵玉翻三倍！”',opts:[['花 20 灵石赌一把（50% 得 60 灵石）',()=>{if(G.gold<20)return null;G.gold-=20;if(Math.random()<.5){G.gold+=60;return '切开一看，灵光四溢！获得 60 灵石。';}return '一块废石，灵石打了水漂。';}],['离开',()=>'你摇摇头离开了。']]},
+let EVT={},SCR={}; // config/events.json、config/screens.json
+const fmt=(t,v={})=>String(t).replace(/\{(\w+)\}/g,(m,k)=>k in v?v[k]:m);
+const EO=(k,i)=>EVT[k].options[i];
+const EVENTS={ // 选项逻辑；文案在 config/events.json
+ dongfu:[()=>{G.hp=Math.max(1,G.hp-8);const r=(G.floor>=10&&!G.relics.includes('jing'))?'jing':randRelic();if(r){G.relics.push(r);return fmt(EO('dongfu',0).result,{relic:RELICS[r][0],relicDesc:RELICS[r][1]});}G.gold+=50;return EO('dongfu',0).resultNone;},()=>EO('dongfu',1).result],
+ lingquan:[()=>{G.hp=Math.min(G.maxHp,G.hp+20);return EO('lingquan',0).result;},()=>'UPGRADE'],
+ sanxiu:[()=>{if(G.gold<30)return null;G.gold-=30;const id=randCard('rare');G.deck.push(mkCard(id));return fmt(EO('sanxiu',0).result,{card:CARDS[id].name});},()=>EO('sanxiu',1).result],
+ huanjing:[()=>'REMOVE',()=>EO('huanjing',1).result],
+ dushi:[()=>{if(G.gold<20)return null;G.gold-=20;if(Math.random()<.5){G.gold+=60;return EO('dushi',0).result;}return EO('dushi',0).resultLose;},()=>EO('dushi',1).result],
 };
-function showEvent(key){key=typeof key==='string'?key:pick(Object.keys(EVENTS));const ev=EVENTS[key];rerender=()=>showEvent(key);
+function showEvent(key){key=typeof key==='string'?key:pick(Object.keys(EVENTS));const ev=EVT[key];rerender=()=>showEvent(key);
  app().innerHTML=topBar()+`<div style="position:absolute;top:44px;left:0;width:620px;bottom:0;background:url(img/event.jpg) left bottom/auto 118% no-repeat"></div>
  <div style="position:absolute;top:44px;left:620px;right:0;bottom:0;padding:70px 60px;background:linear-gradient(90deg,rgba(14,19,26,.6),#0e131a 15%)">
- <h1 style="text-align:left">${ev.name}</h1><p style="font-size:18px;line-height:1.9;color:#d8ccb0" id="evtext">${ev.text}</p><div id="evopts">
- ${ev.opts.map((o,i)=>`<div class="item evbtn" style="margin:12px 0" onclick="evPick('${key}',${i})">【${i+1}】${o[0]}</div>`).join('')}</div></div>`;}
-function evPick(key,i){const r=EVENTS[key].opts[i][1]();
- if(r===null){toast('灵石不足');return;}
- const done=t=>{rerender=showMap;$('#evtext').innerHTML=t;$('#evopts').innerHTML='<span class="btn" onclick="showMap()">继续前进</span>';};
- if(r==='UPGRADE'){viewDeck(c=>{c.up=true;showEvent(key);done(`借灵泉之力，「${def(c).name}」已升级。`);},'选择一张卡升级');return;}
- if(r==='REMOVE'){viewDeck(c=>{G.deck=G.deck.filter(x=>x!==c);G.hp=Math.max(1,G.hp-5);showEvent(key);done(`你斩断执念，「${def(c).name}」从牌组中移除。心魔反噬，你受到 5 点伤害。`);},'选择一张卡删除');return;}
+ <h1 style="text-align:left">${ev.title}</h1><p style="font-size:18px;line-height:1.9;color:#d8ccb0" id="evtext">${ev.text}</p><div id="evopts">
+ ${ev.options.map((o,i)=>`<div class="item evbtn" style="margin:12px 0" onclick="evPick('${key}',${i})">【${i+1}】${o.label}</div>`).join('')}</div></div>`;}
+function evPick(key,i){const r=EVENTS[key][i]();
+ if(r===null){toast(EO(key,i).fail||'灵石不足');return;}
+ const done=t=>{rerender=showMap;$('#evtext').innerHTML=t;$('#evopts').innerHTML=`<span class="btn" onclick="showMap()">${EVT._common.continue}</span>`;};
+ if(r==='UPGRADE'){viewDeck(c=>{c.up=true;showEvent(key);done(fmt(EO(key,1).result,{card:def(c).name}));},EVT[key].pickTitle);return;}
+ if(r==='REMOVE'){viewDeck(c=>{G.deck=G.deck.filter(x=>x!==c);G.hp=Math.max(1,G.hp-5);showEvent(key);done(fmt(EO(key,0).result,{card:def(c).name}));},EVT[key].pickTitle);return;}
  done(r);const tb=$('.top');if(tb)tb.outerHTML=topBar();}
 // ================= 结算 =================
-function showVictory(){rerender=showVictory;app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) left top/200% auto;filter:brightness(.3)"></div>
- <div class="center" style="top:0"><h1 style="font-size:52px">突 破</h1><div style="color:#bfae86">心魔已斩，炼气圆满，踏入筑基。剩余生命 <b style="color:#e8c66a">${G.hp}/${G.maxHp}</b>　选择一颗道心：</div>
+function showVictory(){rerender=showVictory;teleEnd('win');app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) left top/200% auto;filter:brightness(.3)"></div>
+ <div class="center" style="top:0"><h1 style="font-size:52px">${SCR.breakthrough.title}</h1><div style="color:#bfae86">${fmt(SCR.breakthrough.sub,{hp:`<b style="color:#e8c66a">${G.hp}</b>`,maxHp:`<b style="color:#e8c66a">${G.maxHp}</b>`})}</div>
  <div class="row">${Object.entries(DAOXIN).map(([k,v])=>`<div class="panel" style="width:260px;text-align:center;cursor:pointer;border-color:#e8c66a;background:rgba(0,0,0,.75)" onclick="pickDao('${k}')"><h2 style="color:#e8c66a">${v[0]}</h2>${v[1]}<div style="color:#bfae86;font-size:13px;margin-top:8px">${v[2]}</div></div>`).join('')}</div></div>`;}
-function pickDao(k){G.daoxin=k;if(k==='lingmai')G.energyMax++;if(k==='daoji'){G.maxHp+=15;G.hp=G.maxHp;}
- app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) left top/200% auto;filter:brightness(.3)"></div><div class="center" style="top:0"><h1 style="font-size:46px">炼气期 · 通关</h1>
- <div style="font-size:20px">道心：${DAOXIN[k][0]}　|　牌组 ${G.deck.length} 张　|　法宝 ${G.relics.length} 件　|　灵石 ${G.gold}</div><div style="color:#bfae86">筑基期（第二幕）尚在开辟中……</div><span class="btn" onclick="showMenu()">返回主菜单</span></div>`;}
-function showDefeat(){B=null;rerender=showDefeat;app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) 100% 0/212% auto;filter:brightness(.35)"></div>
- <div class="center" style="top:0"><h1 style="font-size:52px;color:#c44">陨 落</h1><div style="font-size:20px">道途止于第 ${G.floor} 层　|　牌组 ${G.deck.length} 张　|　灵石 ${G.gold}</div>
- <div style="color:#bfae86">胜败乃修行常事，重入轮回再问道。</div><span class="btn" onclick="newRun()">重新开始</span><span class="btn" onclick="showMenu()">主菜单</span></div>`;}
+function pickDao(k){G.daoxin=k;if(TELE_CUR&&!TELE_OFF){const a=teleLoad(),r=a.find(x=>x.runId===TELE_CUR);if(r){r.daoxin=k;teleSave(a);}}TELE_CUR=null;if(k==='lingmai')G.energyMax++;if(k==='daoji'){G.maxHp+=15;G.hp=G.maxHp;}
+ app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) left top/200% auto;filter:brightness(.3)"></div><div class="center" style="top:0"><h1 style="font-size:46px">${SCR.clear.title}</h1>
+ <div style="font-size:20px">${fmt(SCR.clear.stats,{daoxin:DAOXIN[k][0],deck:G.deck.length,relics:G.relics.length,gold:G.gold})}</div><div style="color:#bfae86">${SCR.clear.teaser}</div><span class="btn" onclick="showMenu()">${SCR.clear.btn}</span></div>`;}
+function showDefeat(){teleEnd('dead');B=null;rerender=showDefeat;app().innerHTML=`<div class="fullbg" style="background:url(img/result.jpg) 100% 0/212% auto;filter:brightness(.35)"></div>
+ <div class="center" style="top:0"><h1 style="font-size:52px;color:#c44">${SCR.defeat.title}</h1><div style="font-size:20px">${fmt(SCR.defeat.stats,{floor:G.floor,deck:G.deck.length,gold:G.gold})}</div>
+ <div style="color:#bfae86">${SCR.defeat.sub}</div><span class="btn" onclick="newRun()">${SCR.defeat.btnRestart}</span><span class="btn" onclick="showMenu()">${SCR.defeat.btnMenu}</span></div>`;}
+// ================= 试玩数据（本地记录，localStorage） =================
+const TELE_KEY='wd_runs_v2',TELE_MAX=500;let TELE_OFF=false,TELE_LAST=null,TELE_CUR=null;
+// v2（v0.3.2 起）：按设计口径 playtest_metrics.md 重新定义字段；旧 wd_runs_v1 字段不兼容，不再读取（保留在本地不删除）
+const STX_DEF={menuBtn:'试玩数据',title:'试玩数据（本机）',runs:'局数',winRate:'通关率',bossHp:'进心魔时平均血量',reachBoss:'进入心魔',deaths:'每层陨落次数',none:'暂无记录',export:'导出 JSON',clear:'清空记录',back:'返回',confirmClear:'确定清空全部试玩记录？',floor:'层',recent:'最近对局'};
+function stx(k){return (SCR&&SCR.stats&&SCR.stats[k])||STX_DEF[k];}
+function teleLoad(){try{const a=JSON.parse(localStorage.getItem(TELE_KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
+function teleSave(a){try{localStorage.setItem(TELE_KEY,JSON.stringify(a.slice(-TELE_MAX)));}catch(e){}}
+function teleUpd(fn){if(TELE_OFF||!TELE_CUR)return;const a=teleLoad();const r=a.find(x=>x.runId===TELE_CUR);if(!r||r.result)return;fn(r);teleSave(a);}
+function teleStart(){if(TELE_OFF)return;teleQuit();const now=new Date();TELE_CUR=now.getTime().toString(36)+'-'+Math.floor(performance.now()%1e6).toString(36);
+ const a=teleLoad();a.push({runId:TELE_CUR,version:VERSION,startedAt:now.toISOString(),endedAt:null,result:null,deathFloor:null,deathEnemy:null,hpPerFloor:[],hpEnterBoss:null,restChoices:[],potionsUsed:0,shengCount:0,deck:[],relics:[],daoxin:null,maxHp:G.maxHp,path:[]});teleSave(a);}
+function teleSnap(r){r.deck=G.deck.map(c=>c.id+(c.up?'+':''));r.relics=G.relics.slice();r.daoxin=G.daoxin||null;r.maxHp=G.maxHp;}
+function teleHp(){if(G&&G.floor>0)teleUpd(r=>{r.hpPerFloor[G.floor-1]=Math.max(0,G.hp);});}
+function teleFloor(f,t){teleUpd(r=>{r.path.push(t);});}
+function teleBoss(){teleUpd(r=>{r.hpEnterBoss=G.hp;});}
+function teleEnd(res){teleUpd(r=>{r.result=res;r.endedAt=new Date().toISOString();if(G.floor>0)r.hpPerFloor[G.floor-1]=Math.max(0,G.hp);teleSnap(r);
+ if(res==='dead'){r.deathFloor=G.floor;r.deathEnemy=TELE_LAST?TELE_LAST.enemies.join('+'):'event';}});if(res!=='win')TELE_CUR=null;}
+function teleQuit(){if(TELE_CUR)teleEnd('quit');TELE_CUR=null;}
+window.addEventListener('beforeunload',()=>{try{teleQuit();}catch(e){}});
+function teleStats(){const a=teleLoad(),done=a.filter(r=>r.result==='win'||r.result==='dead'),w=done.filter(r=>r.result==='win').length,be=done.filter(r=>r.hpEnterBoss!=null);
+ const deaths={};done.filter(r=>r.result==='dead').forEach(r=>{deaths[r.deathFloor]=(deaths[r.deathFloor]||0)+1;});const preBoss=done.filter(r=>r.result==='dead'&&r.deathFloor<13).length;
+ const sc=done.reduce((s,r)=>s+r.shengCount,0);
+ return {runs:a.length,finished:done.length,quits:a.filter(r=>r.result==='quit').length,wins:w,winRate:done.length?w/done.length:null,reachBoss:be.length,meanBossHp:be.length?be.reduce((s,r)=>s+r.hpEnterBoss,0)/be.length:null,preBossDeathRate:done.length?preBoss/done.length:null,shengPerRun:done.length?sc/done.length:null,deathsByFloor:deaths};}
+function showStats(){B=null;rerender=showStats;const S=teleStats(),a=teleLoad();const pct=x=>x===null?'—':(x*100).toFixed(1)+'%';
+ const mx=Math.max(1,...Object.values(S.deathsByFloor));
+ const bars=Array.from({length:13},(_,i)=>i+1).map(f=>{const n=S.deathsByFloor[f]||0;return `<div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="width:52px;text-align:right">${f} ${stx('floor')}</span><span style="display:inline-block;height:12px;width:${n/mx*300}px;background:#c44"></span><span>${n}</span></div>`;}).join('');
+ const recent=a.slice(-8).reverse().map(r=>`<div style="font-size:13px;color:#bfae86">${(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'))(new Date(r.startedAt))}　${r.result==='win'?'通关':r.result==='dead'?'陨落于第 '+r.deathFloor+' 层（'+(r.deathEnemy==='event'?'事件':String(r.deathEnemy).split('+').map(e=>ENEMIES[e]?ENEMIES[e].name:e).join('、'))+'）':r.result==='quit'?'中途退出':'进行中'}${r.hpEnterBoss!=null?'　心魔前 '+r.hpEnterBoss:''}　相生 ${r.shengCount}　用药 ${r.potionsUsed}</div>`).join('');
+ app().innerHTML=`<div class="fullbg" style="background-image:url(img/mainmenu.jpg);filter:brightness(.3)"></div><div class="center" style="top:0"><h1>${stx('title')}</h1>
+ <div class="panel" id="statsbox" style="width:760px;background:rgba(0,0,0,.75);text-align:left">${a.length?`<div style="font-size:18px">${stx('runs')} <b>${S.runs}</b>（计入 ${S.finished}，中途退出 ${S.quits}）　|　${stx('winRate')} <b>${pct(S.winRate)}</b>　|　${stx('reachBoss')} <b>${S.reachBoss}</b>　|　${stx('bossHp')} <b>${S.meanBossHp===null?'—':S.meanBossHp.toFixed(1)}</b></div>
+ <h3 style="margin:10px 0 4px">${stx('deaths')}</h3>${bars}<h3 style="margin:10px 0 4px">${stx('recent')}</h3>${recent}`:stx('none')}</div>
+ <div><span class="btn" id="stexp" onclick="teleExport()">${stx('export')}</span><span class="btn" onclick="teleClear()">${stx('clear')}</span><span class="btn" onclick="showMenu()">${stx('back')}</span></div></div>`;}
+function teleExport(){const data={exported:new Date().toISOString(),version:VERSION,summary:teleStats(),runs:teleLoad()};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,1)],{type:'application/json'}));
+ const l=document.createElement('a');l.href=url;const d=new Date(),z=n=>String(n).padStart(2,'0');l.download=`stats_${VERSION}_${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}.json`;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function teleClear(){if(!confirm(stx('confirmClear')))return;localStorage.removeItem(TELE_KEY);showStats();}
 // ================= 启动（#test=xxx 用于截图） =================
 function fitApp(){const a=app();if(!a)return;const k=Math.min(innerWidth/1280,innerHeight/800);a.style.transform=`scale(${k})`;a.style.left=((innerWidth-1280*k)/2)+'px';a.style.top=((innerHeight-800*k)/2)+'px';}
 window.addEventListener('resize',fitApp);fitApp();
 function ttInit(){const tt=document.createElement('div');tt.id='tt';document.body.appendChild(tt);
- document.addEventListener('mouseover',ev=>{const c=ev.target.closest&&ev.target.closest('.card,[data-tt]');if(!c){tt.style.display='none';return;}
+ const ttH=ev=>{const hv=document.querySelectorAll('.card:hover');const c=hv.length?hv[hv.length-1]:(ev.target.closest&&ev.target.closest('[data-tt]'));if(c===tt._c&&c)return;tt._c=c;if(!c){tt.style.display='none';return;}
   let h;if(c.classList.contains('card')){h=`<b>${c.querySelector('.ct').textContent}</b>　<span style="color:#9fd8ff">${c.querySelector('.cost').textContent} 灵力</span><div>${c.querySelector('.desc').innerHTML}</div><small>${c.querySelector('.tag').textContent}</small>`;}else h=c.dataset.tt;
-  tt.innerHTML=h;tt.style.display='block';const r=c.getBoundingClientRect();let x=r.left+r.width/2-140,y=r.top-tt.offsetHeight-10;if(y<4)y=r.bottom+10;tt.style.left=Math.max(4,Math.min(innerWidth-284,x))+'px';tt.style.top=y+'px';});}
+  tt.innerHTML=h;tt.style.display='block';const r=c.getBoundingClientRect();let x=r.left+r.width/2-140,y=r.top-tt.offsetHeight-10;if(y<4)y=r.bottom+10;tt.style.left=Math.max(4,Math.min(innerWidth-284,x))+'px';tt.style.top=y+'px';};document.addEventListener('mouseover',ttH);document.addEventListener('mousemove',ttH);}
 try{ttInit();}catch(e){}
 window.onerror=(m,s,l)=>{console.error('JSERR '+m+' @'+l);};
 async function loadConfig(){const r=await fetch('config/daoxin.json');const j=await r.json();DAOXIN={};for(const k in j)DAOXIN[k]=[j[k].name,j[k].desc,j[k].tradeoff];
+ try{EVT=await (await fetch('config/events.json')).json();SCR=await (await fetch('config/screens.json')).json();}catch(e){console.error('JSERR copy config load failed: '+e);}
  try{Object.assign(BAL,await (await fetch('config/balance.json')).json());}catch(e){console.error('JSERR balance load failed: '+e);}}
-(async function boot(){try{await loadConfig();}catch(err){console.error('JSERR config load failed: '+err);}const t=(location.hash.match(/test=(\w+)/)||[])[1];if(!t)return showMenu();
+(async function boot(){try{await loadConfig();}catch(err){console.error('JSERR config load failed: '+err);}const t=(location.hash.match(/test=(\w+)/)||[])[1];if(!t)return showMenu();if(t==='stats')return showStats();TELE_OFF=t!=='auto';
  newRun();G.relics.push('yupei','zhong');G.potions=['huiyuan','xuelian'];G.deck.push(mkCard('wanjian'),mkCard('jianyi',true));
  if(t==='map'){G.floor=5;G.pos=G.map[4][1];G.path=['1-1','2-1','3-0','4-1','5-1'];showMap();}
  else if(t==='battle'){G.floor=5;G.pos=G.map[4][1];startCombat(['spider','bandit'],.8,'combat');const y=B.hand.findIndex(c=>c.id==='jinzhong');if(y>=0)playCard(y);}
@@ -313,7 +351,7 @@ async function loadConfig(){const r=await fetch('config/daoxin.json');const j=aw
  else if(t==='elite'){G.floor=7;G.pos=G.map[6][1];startCombat(['python'],1,'elite');}
  else if(t==='reward'){G.floor=7;combatWon('elite');}
  else if(t==='shop'){G.floor=8;showShop();}else if(t==='rest'){G.floor=6;G.hp=40;showRest();}
- else if(t==='event'){G.floor=4;showEvent('dongfu');}else if(t==='huanjing'){G.floor=5;showEvent('huanjing');}else if(t==='frozen'){G.floor=3;startCombat(['bandit'],1,'combat');B.en[0].mi=1;addSt(B.en[0],'freeze',1);renderBattle();}else if(t==='mapboss'){G.floor=12;G.pos=G.map[11][1];G.path=['1-1','2-1','3-1','4-1','5-1','6-1','7-1','8-1','9-1','10-1','11-1','12-1'];showMap();}else if(t==='victory'){showVictory();}else if(t==='defeat'){G.floor=9;showDefeat();}
+ else if(t==='event'){G.floor=4;showEvent('dongfu');}else if(t==='huanjing'){G.floor=5;showEvent('huanjing');}else if(t==='frozen'){G.floor=3;startCombat(['bandit'],1,'combat');B.en[0].mi=1;addSt(B.en[0],'freeze',1);renderBattle();}else if(t==='mapboss'){G.floor=12;G.pos=G.map[11][1];G.path=['1-1','2-1','3-1','4-1','5-1','6-1','7-1','8-1','9-1','10-1','11-1','12-1'];showMap();}else if(t==='victory'){showVictory();pickDao('jianxin');}else if(t==='defeat'){G.floor=9;showDefeat();}
  else if(t==='auto'){autoplay();}
  else if(t==='potionfull'){G.potions=['huiyuan','xuelian','jingang'];G.floor=7;G.pos=G.map[6][1];combatWon('elite');G.reward.potion='qingmu';takeR('potion');}
  else if(t==='shengtip'||t==='shengtip2'){localStorage.removeItem('wd_shengTip');G.floor=2;G.pos=G.map[1][1];startCombat(['wolf','wolf'],1,'combat');B.hand=[mkCard('huichun'),mkCard('xinghuo'),mkCard('yujian'),mkCard('jinzhong'),mkCard('hanbing')];B.lastEl='wood';const i=1;B.flashArrow=null;playCard(i);B.flashArrow=['wood','fire'];renderBattle();localStorage.removeItem('wd_shengTip');shengTip('wood','fire');if(location.hash.includes('shengtip2')){const j=B.hand.findIndex(c=>c.id==='jinzhong');playCard(j);}}

@@ -1,0 +1,35 @@
+{
+ "breakthrough": {
+  "title": "突　破",
+  "sub": "心魔已斩，炼气圆满，踏入筑基。剩余生命 {hp}/{maxHp}　选择一颗道心："
+ },
+ "clear": {
+  "title": "炼气期 · 通关",
+  "stats": "道心：{daoxin}　|　牌组 {deck} 张　|　法宝 {relics} 件　|　灵石 {gold}",
+  "teaser": "筑基期（第二幕）尚在开辟中……",
+  "btn": "返回主菜单"
+ },
+ "defeat": {
+  "title": "陨　落",
+  "stats": "道途止于第 {floor} 层　|　牌组 {deck} 张　|　灵石 {gold}",
+  "sub": "胜败乃修行常事，重入轮回再问道。",
+  "btnRestart": "重新开始",
+  "btnMenu": "主菜单"
+ },
+ "stats": {
+  "menuBtn": "试玩数据",
+  "title": "试玩数据（本机）",
+  "runs": "局数",
+  "winRate": "通关率",
+  "bossHp": "进心魔时平均血量",
+  "reachBoss": "进入心魔",
+  "deaths": "每层陨落次数",
+  "none": "暂无记录",
+  "export": "导出 JSON",
+  "clear": "清空记录",
+  "back": "返回",
+  "confirmClear": "确定清空全部试玩记录？",
+  "floor": "层",
+  "recent": "最近对局"
+ }
+}
